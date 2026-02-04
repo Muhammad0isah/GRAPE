@@ -1,15 +1,12 @@
-# Private test labels - keep locally, use GitHub Secrets for CI
+# Private test labels - use GitHub Secrets
 data/private/
-
-# Raw images (too large >100MB, provide download links in README)
-data/raw/
 
 # Python cache
 __pycache__/
 *.pyc
 *.pyo
 
-# Local submission outputs  
+# Local submission outputs
 submission.csv
 
 # OS files
