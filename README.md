@@ -6,13 +6,13 @@ A GNN benchmark for diabetic retinopathy classification from retinal vessel grap
 **Metric:** Macro F1 Score (leaderboard), AUROC (also reported)  
 **Data:** DRIVE[[1]](https://drive.grand-challenge.org/) + STARE[[2]](https://cecas.clemson.edu/~ahoover/stare/) + HRF[[3]](https://www5.cs.fau.de/research/data/fundus-images/) (70 graphs total)
 
-📊 **[Live Leaderboard](https://muhammad0isah.github.io/GRAPE/leaderboard.html)**
-
+**Live Leaderboard at** [https://muhammad0isah.github.io/GRAPE/leaderboard.html](https://muhammad0isah.github.io/GRAPE/leaderboard.html)
+ 
 ---
 
 ## Motivation
 
-- **463 million** people have diabetes globally
+- **Over 463 million** people have diabetes globally
 - **Diabetic retinopathy (DR)** is the leading cause of blindness in working-age adults
 - Retinal blood vessels form **natural graphs** - bifurcations as nodes, vessel segments as edges
 - Vessel topology (branching patterns, tortuosity, connectivity) indicates disease progression
