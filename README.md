@@ -1,10 +1,10 @@
 # GRAPE - Graph Retinal Analysis for Prediction and Evaluation
 
-A GNN benchmark for diabetic retinopathy classification from retinal vessel graphs.
+GNN challenge for diabetic retinopathy classification from retinal vessel graphs.
 
 **Task:** Binary graph classification (healthy vs DR)  
-**Metric:** Macro F1  
-**Data:** DRIVE[[1]](https://drive.grand-challenge.org/) + STARE[[2]](https://cecas.clemson.edu/~ahoover/stare/) + HRF[[3]](https://www5.cs.fau.de/research/data/fundus-images/) (70 graphs total)
+**Metric:** Macro F1, AUROC  
+**Data:** 70 graphs from 3 public datasets
 
 📊 **[Live Leaderboard](https://muhammad0isah.github.io/GRAPE/leaderboard.html)**
 
@@ -14,22 +14,19 @@ A GNN benchmark for diabetic retinopathy classification from retinal vessel grap
 
 - **463 million** people have diabetes globally
 - **Diabetic retinopathy (DR)** is the leading cause of blindness in working-age adults
-- Retinal blood vessels form **natural graphs** - bifurcations as nodes, vessel segments as edges
+- Retinal blood vessels form **natural graphs** — bifurcations as nodes, vessel segments as edges
 - Vessel topology (branching patterns, tortuosity, connectivity) indicates disease progression
-- **No unified GNN benchmark** exists for retinal vessel graph analysis
-
-This challenge evaluates GNN methods on clinically-relevant retinal vessel classification.
 
 ---
 
 ## Data Sources
 
-| Dataset | Images | Healthy | DR |
-|---------|--------|---------|-----|
-| DRIVE[[1]](https://drive.grand-challenge.org/) | 20 | 17 | 3 |
-| STARE[[2]](https://cecas.clemson.edu/~ahoover/stare/) | 20 | 16 | 4 |
-| HRF[[3]](https://www5.cs.fau.de/research/data/fundus-images/) | 30 | 15 | 15 |
-| **Total** | **70** | **48** | **22** |
+| Dataset | Images | Healthy | DR | Source |
+|---------|--------|---------|-----|--------|
+| DRIVE | 20 | 17 | 3 | https://drive.grand-challenge.org/ |
+| STARE | 20 | 16 | 4 | https://cecas.clemson.edu/~ahoover/stare/ |
+| HRF | 30 | 15 | 15 | https://www5.cs.fau.de/research/data/fundus-images/ |
+| **Total** | **70** | **48** | **22** | |
 
 **Graph IDs:**
 - `D_XX` = DRIVE image XX
@@ -58,12 +55,6 @@ data/
 1. Use pre-processed CSVs directly (recommended)
 2. Use raw images for custom graph extraction
 
-**File naming:**
-- `D_21` → `drive/21_training.tif` + `21_manual1.gif`
-- `S_4` → `stare/im0004.ppm` + `im0004.ah.ppm`
-- `H_5` → `hrf/05_h.jpg` + `05_h.tif`
-- `R_5` → `hrf/05_dr.JPG` + `05_dr.tif`
-
 ---
 
 ## CSV Data Format
@@ -75,14 +66,8 @@ data/
 | node_id | Node ID within graph |
 | x, y | Coordinates (pixels) |
 | width | Vessel width |
-| type | 1=junction, 0=endpoint |
+| type | junction / endpoint |
 | edges | Adjacent nodes (semicolon-separated) |
-
-```csv
-graph_id,node_id,x,y,width,type,edges
-D_21,0,165.8,64.8,2.8,1,7;105
-D_21,1,324.7,77.5,4.0,1,3;10;101
-```
 
 ### train_labels.csv
 | Column | Description |
@@ -96,8 +81,8 @@ D_21,1,324.7,77.5,4.0,1,3;10;101
 
 ```csv
 graph_id,label
-S_4,0
-S_235,1
+D_25,0
+R_2,1
 ```
 
 - `graph_id` must match test_data.csv
