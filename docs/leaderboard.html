@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRAPE Challenge Leaderboard</title>
+  <link rel="stylesheet" href="leaderboard.css" />
+</head>
+<body>
+  <header class="wrap">
+    <div class="title-row">
+      <h1>GRAPE Challenge Leaderboard</h1>
+      <p class="sub">Graph Retinal Analysis for Prediction and Evaluation. Scores are Macro F1 computed on the hidden test set.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="controls card">
+      <div class="control">
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="Search team, model, notes…" />
+      </div>
+
+      <div class="control">
+        <label for="modelFilter">Model</label>
+        <select id="modelFilter">
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="dateFilter">Date</label>
+        <select id="dateFilter">
+          <option value="all">All</option>
+          <option value="last30">Last 30 days</option>
+          <option value="last180">Last 180 days</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label>Columns</label>
+        <div class="checks" id="columnToggles"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th data-key="rank" data-sort="number">Rank</th>
+              <th data-key="team" data-sort="string">Team</th>
+              <th data-key="model" data-sort="string">Model</th>
+              <th data-key="score" data-sort="number">Score</th>
+              <th data-key="timestamp_utc" data-sort="string">Date (UTC)</th>
+              <th data-key="notes" data-sort="string">Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="foot">
+        <span id="status">Loading leaderboard…</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="leaderboard.js"></script>
+</body>
+</html>

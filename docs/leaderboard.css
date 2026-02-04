@@ -1,0 +1,80 @@
+:root{
+  --bg:#0b0f17;
+  --panel:#101827;
+  --text:#e6edf3;
+  --muted:#9fb0c0;
+  --border:#223047;
+  --accent:#7aa2f7;
+  --good:#3fb950;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+.wrap{max-width:1100px;margin:0 auto;padding:18px}
+header .title-row{padding:10px 0}
+h1{margin:0 0 6px 0;font-size:28px;letter-spacing:.2px}
+.sub{margin:0;color:var(--muted);max-width:70ch;line-height:1.4}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 10px 26px rgba(0,0,0,.25);
+  margin:14px 0;
+}
+.controls{
+  display:grid;
+  grid-template-columns: 1.5fr 0.7fr 0.7fr 1.1fr;
+  gap:12px;
+  align-items:end;
+}
+.control label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+input[type="search"], select{
+  width:100%;
+  padding:10px 10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#0c1422;
+  color:var(--text);
+  outline:none;
+}
+input[type="search"]:focus, select:focus{border-color:var(--accent)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{
+  display:flex;gap:6px;align-items:center;
+  font-size:12px;color:var(--muted);
+  border:1px solid var(--border);
+  padding:6px 8px;border-radius:999px;background:#0c1422;
+  user-select:none;
+}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:separate;border-spacing:0}
+th, td{padding:10px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+th{
+  position:sticky;top:0;
+  background:linear-gradient(#111b2b, #0f1827);
+  text-align:left;
+  font-size:12px;
+  color:var(--muted);
+  cursor:pointer;
+}
+tbody tr:hover{background:#0d1626}
+td.score{font-variant-numeric:tabular-nums}
+td.rank{color:var(--accent);font-weight:600}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--muted);font-size:12px}
+.badge{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#0c1422;
+  color:var(--muted);
+  font-size:12px;
+}
+@media (max-width: 900px){
+  .controls{grid-template-columns:1fr 1fr; }
+}

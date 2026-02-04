@@ -1,0 +1,26 @@
+# Private test labels - keep locally, use GitHub Secrets for CI
+data/private/
+
+# Raw images (too large >100MB, provide download links in README)
+data/raw/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Local submission outputs  
+submission.csv
+
+# OS files
+.DS_Store
+
+# Virtual envs
+.env
+venv/
+.venv/
+
+# Build
+*.egg-info/
+dist/
+build/

@@ -1,95 +1,104 @@
-# Cora Node Classification Challenge
+# GRAPE - Graph Retinal Analysis for Prediction and Evaluation
 
-## Overview
-Predict research topics of academic papers in the Cora citation network. Node classification with 80% training data and 20% held-out test set.
+GNN challenge for diabetic retinopathy classification from retinal vessel graphs.
 
-## Task
-- Nodes: 2,708 papers
-- Edges: 5,429 citations  
-- Features: 1,433 bag-of-words
-- Classes: 7 research topics
-- Train: 2,166 nodes (80%), Test: 542 nodes (20%)
+**Task:** Binary graph classification (healthy vs DR)  
+**Metric:** Macro F1  
+**Data:** DRIVE[[1]](https://drive.grand-challenge.org/) + STARE[[2]](https://cecas.clemson.edu/~ahoover/stare/) + HRF[[3]](https://www5.cs.fau.de/research/data/fundus-images/) (70 graphs total)
 
-## Dataset
+---
 
-| File | Description |
-|------|-------------|
-| data/nodes.csv | Node features (node_id + 1433 features) |
-| data/edges.csv | Edge list (source, target) |
-| data/train.csv | Training data (node_id, features, target) |
-| data/test.csv | Test data (node_id, features) |
-| submissions/sample_submission.csv | Submission format example |
+## Data Sources
 
-## Evaluation
-Macro F1-Score - treats all 7 classes equally.
+| Dataset | Images | Healthy | DR |
+|---------|--------|---------|-----|
+| DRIVE[[1]](https://drive.grand-challenge.org/) | 20 | 17 | 3 |
+| STARE[[2]](https://cecas.clemson.edu/~ahoover/stare/) | 20 | 16 | 4 |
+| HRF[[3]](https://www5.cs.fau.de/research/data/fundus-images/) | 30 | 15 | 15 |
+| **Total** | **70** | **48** | **22** |
 
-## Rules
-- Must use GNN methods (GCN, GAT, GraphSAGE, etc.)
-- Any framework allowed (DGL, PyG, etc.)
-- No external data or pretrained embeddings
-- No using test labels
-- Inference under 60 seconds
+**Graph IDs:**
+- `D_XX` = DRIVE image XX
+- `S_XX` = STARE image XX
+- `H_XX` = HRF healthy image XX
+- `R_XX` = HRF DR image XX
 
-## Repository Structure
+---
+
+## Structure
 
 ```
-gnn-challenge/
-├── data/
-│   ├── nodes.csv
-│   ├── edges.csv
-│   ├── train.csv
-│   └── test.csv
-├── submissions/
+data/
+├── public/                 # Pre-processed (ready to use)
+│   ├── train_data.csv      # 55 graphs, node features + edges
+│   ├── train_labels.csv    # Training labels
+│   ├── test_data.csv       # 15 graphs for prediction
 │   └── sample_submission.csv
-├── starter_code/
-│   ├── baseline.py
-│   ├── prepare_data.py
-│   └── requirements.txt
-├── README.md
-├── scoring_script.py
-├── update_leaderboard.py
-└── LICENSE
+└── raw/                    # Original images + masks
+    ├── drive/              # XX_training.tif + XX_manual1.gif
+    ├── stare/              # imXXXX.ppm + imXXXX.ah.ppm
+    └── hrf/                # XX_h.jpg/XX_dr.JPG + XX_h.tif/XX_dr.tif
 ```
 
-## Getting Started
+**Two options:**
+1. Use pre-processed CSVs directly (recommended)
+2. Use raw images for custom graph extraction
 
-```bash
-pip install -r starter_code/requirements.txt
-cd starter_code
-python prepare_data.py  # Downloads Cora and creates train/test split
-python baseline.py      # Trains GCN and generates submission
+**File naming:**
+- `D_21` → `drive/21_training.tif` + `21_manual1.gif`
+- `S_4` → `stare/im0004.ppm` + `im0004.ah.ppm`
+- `H_5` → `hrf/05_h.jpg` + `05_h.tif`
+- `R_5` → `hrf/05_dr.JPG` + `05_dr.tif`
+
+---
+
+## CSV Data Format
+
+### train_data.csv / test_data.csv
+| Column | Description |
+|--------|-------------|
+| graph_id | Graph ID (D_21, S_44, etc.) |
+| node_id | Node ID within graph |
+| x, y | Coordinates (pixels) |
+| width | Vessel width |
+| type | 1=junction, 0=endpoint |
+| edges | Adjacent nodes (semicolon-separated) |
+
+```csv
+graph_id,node_id,x,y,width,type,edges
+D_21,0,165.8,64.8,2.8,1,7;105
+D_21,1,324.7,77.5,4.0,1,3;10;101
 ```
+
+### train_labels.csv
+| Column | Description |
+|--------|-------------|
+| graph_id | Graph ID |
+| label | 0=healthy, 1=diabetic retinopathy |
+
+---
 
 ## Submission Format
 
-CSV with two columns:
 ```csv
-node_id,target
-0,3
-5,1
-12,6
+graph_id,label
+S_4,0
+S_235,1
 ```
+
+- `graph_id` must match test_data.csv
+- `label` must be 0 or 1
+
+---
 
 ## How to Submit
 
-1. Fork this repository
-2. Clone your fork locally
-3. Run your model and save predictions to `submissions/your_team_name.csv`
-4. Score your submission locally:
-   ```bash
-   python scoring_script.py submissions/your_team_name.csv
-   ```
-5. Update the leaderboard:
-   ```bash
-   python update_leaderboard.py submissions/your_team_name.csv "Your Team" "Your Method"
-   ```
-6. Commit and push to your fork
-7. Create a Pull Request
+1. Fork this repo
+2. Add `submissions/inbox/<team>/predictions.csv`
+3. Open PR
 
-## Leaderboard
+---
 
-See [leaderboard.md](leaderboard.md)
+## License
 
-| Rank | Team | Macro F1 | Method |
-|------|------|----------|--------|
-| 1 | Baseline | 0.8763 | 2-layer GCN |
+MIT
