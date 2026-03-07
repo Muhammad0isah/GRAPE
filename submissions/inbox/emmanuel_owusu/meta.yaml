@@ -1,0 +1,3 @@
+model: DAGNet
+type: human
+notes: Domain-Adversarial Graph Neural Network (DANN-GNN) for diabetic retinopathy detection on retinal vessel graphs.
