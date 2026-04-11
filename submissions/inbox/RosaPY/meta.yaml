@@ -1,0 +1,3 @@
+model: GIN                          # Name of your model (optional)
+type: human                               # human, llm, or human+llm
+notes: 2layers  # Brief description (optional)
