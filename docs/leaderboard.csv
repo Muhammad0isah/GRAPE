@@ -1,3 +1,18 @@
-timestamp_utc,team,model,score,notes
-2026-03-03T07:58:45Z,main,,0.829545,
-2026-03-03T08:40:26Z,faranbutt,,0.829545,
+timestamp_utc,team,model,type,score,notes
+2026-03-03T08:40:26Z,faranbutt,,human,0.829545,
+2026-03-04T14:35:23Z,Maha,,human,0.400000,this was hard
+2026-03-07T17:24:29Z,emmanuel_owusu,DAGNet,human,0.761905,Domain-Adversarial Graph Neural Network (DANN-GNN) for diabetic retinopathy detection on retinal vessel graphs.
+2026-03-08T18:06:22Z,peguy_team,GCN_degree,human,0.829545,3-layer GCN with node degree feature and global mean/max/sum pooling
+2026-03-11T19:49:15Z,samuel,GIN,human,0.829545,GCN and GIN layers
+2026-03-16T00:08:57Z,SanaeZR,GCN,human,0.583333,2-layer GCN
+2026-03-23T13:48:19Z,Sargam1412,BiGCN,human,0.761905,Data augmentation to manage small dataset
+2026-03-25T19:06:52Z,Mubaraq,GAT,human,0.761905,
+2026-03-27T06:17:35Z,Idrees_Bhat,GrapeGAT-Optimized,human,0.524887,Improved GAT with correct graph feature batching bidirectional edges residual connections and label smoothing
+2026-03-28T17:33:09Z,Abderrahmane,GCN,human,0.488636,3-layer GCN (node degree as additional feature)
+2026-03-28T17:48:44Z,AIkram,VesselGAT,human,0.761905,3-layer GAT with skip connections mean+max pooling weighted CE for class imbalance
+2026-04-02T17:05:12Z,Ignatius,GAT,human,0.659091,3-layer GAT with multi-head attention multiple pooling strategies and graph-level features.
+2026-04-03T00:42:05Z,TugaYousif,GATConv,human,0.829545,/
+2026-04-04T00:03:19Z,Murad,GIN,human,0.761905,3-layer GIN with JumpingKnowledge multi-pool spectral+topological graph features 5-model full-retrain ensemble DropEdge label smoothing
+2026-04-09T19:09:49Z,Elhouiti_Ikram,GIN,human+llm,0.761905,1 layer GIN
+2026-04-11T08:33:28Z,RosaPY,GIN # Name of your model (optional),human,0.761905,2layers # Brief description (optional)
+2026-05-15T22:38:55Z,DeepSeek-v4-pro,# Name of your model (optional),human,0.829545,/

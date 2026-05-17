@@ -1,10 +1,20 @@
-# GRAPE - Graph Retinal Analysis for Prediction and Evaluation
+<div align="center">
 
-A GNN benchmark for diabetic retinopathy classification from retinal vessel graphs.
+# GRAPE
+
+### **G**raph **R**etinal **A**nalysis for **P**rediction and **E**valuation
+
+[![Leaderboard](https://img.shields.io/badge/Leaderboard-Live-blue)](https://muhammad0isah.github.io/GRAPE/leaderboard.html) [![Dataset](https://img.shields.io/badge/Dataset-DRIVE_|_STARE_|_HRF-green)](#data-sources) [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![CI](https://img.shields.io/badge/CI-Automated_Scoring-orange)](.github/workflows/score_submission.yml) [![Encryption](https://img.shields.io/badge/Submissions-RSA_Encrypted-red)](encryption/)
+
+</div>
+
+## Overview
+
+**GRAPE** is a GNN benchmark competition for diabetic retinopathy classification from retinal vessel graphs.
 
 **Task:** Binary graph classification (healthy vs DR)  
 **Metric:** Macro F1 Score (leaderboard_score), AUROC  
-**Data:** 70 retinal vessel graphs from DRIVE + STARE + HRF  
+**Data:** 70 retinal vessel graphs from DRIVE[<sup>1</sup>](#data-sources) + STARE[<sup>2</sup>](#data-sources) + HRF[<sup>3</sup>](#data-sources)  
 **Leaderboard:** [muhammad0isah.github.io/GRAPE/leaderboard.html](https://muhammad0isah.github.io/GRAPE/leaderboard.html)
 
 ---
@@ -158,15 +168,21 @@ python encryption/encrypt.py submission.csv submissions/inbox/YOUR_TEAM_NAME/sub
 
 Replace `YOUR_TEAM_NAME` with your team name (no spaces, use underscores).
 
-**(Optional)** Add a `meta.yaml` in your team folder to display your model name and notes on the leaderboard:
+Add a `meta.yaml` in your team folder to display your model name and notes on the leaderboard:
 
 ```yaml
-# submissions/inbox/YOUR_TEAM_NAME/meta.yaml
-model: VesselGCN
-notes: 3-layer GCN with skip connections
+model: VesselGCN                          # Name of your model (optional)
+type: human                               # human, llm, or human+llm
+notes: 3-layer GCN with skip connections  # Brief description (optional)
 ```
 
-Both fields are optional. If you don't include `meta.yaml`, your entry will appear with no model name or notes.
+Example folder structure:
+
+```
+submissions/inbox/<team>/
+├── submission.csv.enc   # Required (encrypted predictions)
+└── meta.yaml            # Describes your submission
+```
 
 ### Step 5: Fork, Commit, and Open a Pull Request
 
@@ -218,3 +234,16 @@ Dependencies: `torch`, `torch-geometric`, `pandas`, `numpy`.
 ## License
 
 MIT
+
+---
+
+## Citation
+
+```bibtex
+@misc{grape_2025,
+  title={GRAPE:Graph Retinal Analysis for Prediction and Evaluation},
+  author={Muhammad Ibrahim Isah},
+  year={2026},
+  url={https://github.com/Muhammad0isah/GRAPE}
+}
+```

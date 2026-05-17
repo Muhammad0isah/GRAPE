@@ -21,14 +21,10 @@ jobs:
           sparse-checkout: submissions/inbox
           sparse-checkout-cone-mode: true
 
-      - name: Copy submission into workspace
+      - name: Inspect PR submission contents
         run: |
           echo "=== PR submission contents ==="
           find pr-submission/submissions/inbox -type f 2>/dev/null
-          cp -r pr-submission/submissions/inbox/* submissions/inbox/ 2>/dev/null || true
-          rm -rf pr-submission
-          echo "=== Workspace submissions/inbox contents ==="
-          find submissions/inbox -type f 2>/dev/null
 
       - uses: actions/setup-python@v5
         with:
@@ -42,24 +38,38 @@ jobs:
         env:
           SUBMISSION_PRIVATE_KEY: ${{ secrets.SUBMISSION_PRIVATE_KEY }}
         run: |
-          ENC=$(find submissions/inbox -name "*.enc" | head -1)
-          if [ -z "$ENC" ]; then
-            echo "::error::No .enc file found in submissions/inbox/"
+          ENC_COUNT=$(find pr-submission/submissions/inbox -name "*.enc" | wc -l)
+          if [ "$ENC_COUNT" -eq 0 ]; then
+            echo "::error::No .enc file found in PR under submissions/inbox/"
             exit 1
           fi
-          TEAM=$(echo "$ENC" | sed 's|submissions/inbox/||' | cut -d'/' -f1)
-          # If team is just the filename (no subfolder), derive from PR branch
-          if [[ "$TEAM" == *.enc ]]; then
-            TEAM=$(echo "${{ github.head_ref }}" | sed 's|submission/||')
+          if [ "$ENC_COUNT" -gt 1 ]; then
+            echo "::error::Found multiple .enc files in PR. Please submit exactly one encrypted file."
+            find pr-submission/submissions/inbox -name "*.enc"
+            exit 1
           fi
+
+          ENC=$(find pr-submission/submissions/inbox -name "*.enc" | head -1)
+          TEAM=$(echo "$ENC" | sed 's|pr-submission/submissions/inbox/||' | cut -d'/' -f1)
+          # If team is just the filename (no subfolder), derive from PR branch.
+          # If branch is main/master, fall back to PR author login.
+          if [[ "$TEAM" == *.enc ]]; then
+            TEAM=$(echo "${{ github.head_ref }}" | sed 's|submission/||' | sed 's|inbox/||' | sed 's|/.*||')
+            if [ -z "$TEAM" ] || [ "$TEAM" = "main" ] || [ "$TEAM" = "master" ]; then
+              TEAM="${{ github.event.pull_request.user.login }}"
+            fi
+          fi
+          echo "Detected TEAM=$TEAM"
           python encryption/decrypt.py "$ENC" /tmp/predictions.csv
           echo "name=$TEAM" >> "$GITHUB_OUTPUT"
 
       - name: Enforce one-submission policy
         run: |
-          TEAM="${{ steps.team.outputs.name }}"
-          if grep -qi ",$TEAM," leaderboard/leaderboard.csv 2>/dev/null; then
-            echo "::error::Team '$TEAM' has already submitted."
+          GITHUB_USER="$(echo "${{ github.event.pull_request.user.login }}" | tr '[:upper:]' '[:lower:]')"
+          USER_DB=".github/submitted_github_users.txt"
+          touch "$USER_DB"
+          if grep -Fxqi "$GITHUB_USER" "$USER_DB"; then
+            echo "::error::GitHub user '$GITHUB_USER' has already submitted."
             exit 1
           fi
 
@@ -80,36 +90,69 @@ jobs:
       - name: Read optional meta.yaml
         id: meta
         run: |
-          # Find meta.yaml anywhere in submissions/inbox
-          echo "=== All files in submissions/inbox ==="
-          find submissions/inbox -type f
-          META=$(find submissions/inbox \( -name "meta.yaml" -o -name "meta.yml" \) | head -1)
+          TEAM="${{ steps.team.outputs.name }}"
+          echo "=== All files in PR submissions/inbox ==="
+          find pr-submission/submissions/inbox -type f
+
+          META=""
+          if [ -f "pr-submission/submissions/inbox/$TEAM/meta.yaml" ]; then
+            META="pr-submission/submissions/inbox/$TEAM/meta.yaml"
+          elif [ -f "pr-submission/submissions/inbox/$TEAM/meta.yml" ]; then
+            META="pr-submission/submissions/inbox/$TEAM/meta.yml"
+          else
+            META=$(find pr-submission/submissions/inbox \( -name "meta.yaml" -o -name "meta.yml" \) | head -1)
+          fi
+
           MODEL=""
           NOTES=""
+          TYPE=""
           if [ -n "$META" ]; then
             echo "Found metadata file: $META"
             cat "$META"
             MODEL=$(awk -F': ' '/^[Mm]odel:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
             NOTES=$(awk -F': ' '/^[Nn]otes:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
+            TYPE=$(awk -F': ' '/^[Tt]ype:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
+            TYPE=$(echo "$TYPE" | tr -d '\r\n' | xargs)
             echo "Parsed MODEL=$MODEL"
             echo "Parsed NOTES=$NOTES"
+            echo "Parsed TYPE=$TYPE"
           else
             echo "No meta.yaml found anywhere in submissions/inbox/"
           fi
+          # Default type to human if not specified
+          if [ -z "$TYPE" ]; then
+            TYPE="human"
+          fi
           echo "model=$MODEL" >> "$GITHUB_OUTPUT"
           echo "notes=$NOTES" >> "$GITHUB_OUTPUT"
+          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
 
       - name: Update leaderboard
         run: |
           TEAM="${{ steps.team.outputs.name }}"
+          GITHUB_USER="$(echo "${{ github.event.pull_request.user.login }}" | tr '[:upper:]' '[:lower:]')"
+          USER_DB=".github/submitted_github_users.txt"
           F1="${{ steps.eval.outputs.f1 }}"
           AUC="${{ steps.eval.outputs.auc }}"
           MODEL="${{ steps.meta.outputs.model }}"
           NOTES="${{ steps.meta.outputs.notes }}"
+          TYPE="${{ steps.meta.outputs.type }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Append to leaderboard CSV (columns: timestamp_utc,team,model,score,notes)
-          echo "${TIMESTAMP},${TEAM},${MODEL},${F1},${NOTES}" >> leaderboard/leaderboard.csv
+          # Validate type value
+          if [ -n "$TYPE" ] && [ "$TYPE" != "human" ] && [ "$TYPE" != "llm" ] && [ "$TYPE" != "human+llm" ]; then
+            echo "::warning::Invalid type '$TYPE'. Must be human, llm, or human+llm. Defaulting to human."
+            TYPE="human"
+          fi
+
+          # Append to leaderboard CSV (columns: timestamp_utc,team,model,type,score,notes)
+          echo "${TIMESTAMP},${TEAM},${MODEL},${TYPE},${F1},${NOTES}" >> leaderboard/leaderboard.csv
+
+          # Track GitHub usernames that have submitted
+          touch "$USER_DB"
+          if ! grep -Fxqi "$GITHUB_USER" "$USER_DB"; then
+            echo "$GITHUB_USER" >> "$USER_DB"
+          fi
 
           # Render leaderboard markdown
           python competition/render_leaderboard.py
@@ -121,7 +164,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add leaderboard/ docs/leaderboard.csv
+          git add leaderboard/ docs/leaderboard.csv .github/submitted_github_users.txt
           git commit -m "🏆 Leaderboard update: ${{ steps.team.outputs.name }} (F1=${{ steps.eval.outputs.f1 }})"
           git push
 
@@ -133,5 +176,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ✅ Submission Scored Successfully\n\n| Metric | Score |\n|--------|-------|\n| **Macro F1** (leaderboard) | ${{ steps.eval.outputs.f1 }} |\n| **AUROC** | ${{ steps.eval.outputs.auc }} |\n| **Model** | ${{ steps.meta.outputs.model || 'not specified' }} |\n\n🏆 The leaderboard has been updated. You may now close this PR.`
+              body: `## ✅ Submission Scored Successfully\n\n| Metric | Score |\n|--------|-------|\n| **Macro F1** (leaderboard) | ${{ steps.eval.outputs.f1 }} |\n| **AUROC** | ${{ steps.eval.outputs.auc }} |\n| **Model** | ${{ steps.meta.outputs.model || 'not specified' }} |\n| **Type** | ${{ steps.meta.outputs.type || 'not specified' }} |\n\n🏆 The leaderboard has been updated. You may now close this PR.`
             })

@@ -15,16 +15,16 @@ body{
   color:var(--text);
 }
 .wrap{max-width:1100px;margin:0 auto;padding:18px}
-header .title-row{padding:10px 0}
-h1{margin:0 0 6px 0;font-size:28px;letter-spacing:.2px}
-.sub{margin:0;color:var(--muted);max-width:70ch;line-height:1.4}
+header .title-row{padding:10px 0;text-align:center}
+h1{margin:0 0 6px 0;font-size:28px;letter-spacing:.2px;font-weight:700}
+.sub{margin:0;color:var(--muted);line-height:1.5}
 .card{
   background:var(--panel);
   border:1px solid var(--border);
   border-radius:14px;
   padding:14px;
   box-shadow:0 10px 26px rgba(0,0,0,.25);
-  margin:14px 0;
+  margin:8px 0;
 }
 .controls{
   display:grid;

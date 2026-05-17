@@ -49,10 +49,11 @@ function renderTable(){
     const cells = [
       ["rank", rank],
       ["team", r.team],
-      ["model", r.model],
+      ["model", r.model || "-"],
+      ["type", r.type || "-"],
       ["score", r.score],
       ["timestamp_utc", r.timestamp_utc],
-      ["notes", r.notes || ""],
+      ["notes", r.notes || "-"],
     ];
     cells.forEach(([k, v]) => {
       const td = document.createElement("td");
@@ -83,7 +84,7 @@ function applyFilters(){
     const maxDays = (date === "last30") ? 30 : 180;
     rows = rows.filter(r => daysAgo(r.timestamp_utc) <= maxDays);
   }
-  if(q) rows = rows.filter(r => `${r.team} ${r.model} ${r.notes}`.toLowerCase().includes(q));
+  if(q) rows = rows.filter(r => `${r.team} ${r.model} ${r.type} ${r.notes}`.toLowerCase().includes(q));
 
   const k = state.sortKey;
   const dir = state.sortDir === "asc" ? 1 : -1;
@@ -107,7 +108,7 @@ function applyFilters(){
 }
 
 function setupColumnToggles(){
-  const cols = [["rank","Rank"],["team","Team"],["model","Model"],["score","Score"],["timestamp_utc","Date"],["notes","Notes"]];
+  const cols = [["team","Team"],["model","Model"],["type","Type"],["score","Score"],["timestamp_utc","Date"],["notes","Notes"]];
   const wrap = document.getElementById("columnToggles");
   wrap.innerHTML = "";
   cols.forEach(([k,label]) => {
@@ -145,6 +146,7 @@ async function main(){
       timestamp_utc: r.timestamp_utc,
       team: r.team,
       model: (r.model || ""),
+      type: (r.type || ""),
       score: r.score,
       notes: r.notes || "",
     }));
