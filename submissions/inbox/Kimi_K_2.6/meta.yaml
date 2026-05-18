@@ -1,0 +1,3 @@
+model: VesselGCN-Ensemble
+type: llm
+notes: 5-fold stratified CV ensemble of 3-layer GCN with graph topological features
