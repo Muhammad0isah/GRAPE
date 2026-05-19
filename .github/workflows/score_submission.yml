@@ -31,7 +31,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install pandas scikit-learn cryptography
+        run: pip install pandas scikit-learn cryptography pyyaml
 
       - name: Detect team and decrypt
         id: team
@@ -63,11 +63,79 @@ jobs:
           python encryption/decrypt.py "$ENC" /tmp/predictions.csv
           echo "name=$TEAM" >> "$GITHUB_OUTPUT"
 
-      - name: Enforce one-submission policy
+      - name: Read and parse compulsory meta.yaml
+        id: meta
         run: |
           TEAM="${{ steps.team.outputs.name }}"
-          if grep -qi ",$TEAM," leaderboard/leaderboard.csv 2>/dev/null; then
-            echo "::error::Team '$TEAM' has already submitted."
+          echo "=== All files in PR submissions/inbox ==="
+          find pr-submission/submissions/inbox -type f
+
+          META=""
+          if [ -f "pr-submission/submissions/inbox/$TEAM/meta.yaml" ]; then
+            META="pr-submission/submissions/inbox/$TEAM/meta.yaml"
+          elif [ -f "pr-submission/submissions/inbox/$TEAM/meta.yml" ]; then
+            META="pr-submission/submissions/inbox/$TEAM/meta.yml"
+          else
+            META=$(find pr-submission/submissions/inbox \( -name "meta.yaml" -o -name "meta.yml" \) | head -1)
+          fi
+
+          if [ -z "$META" ]; then
+            echo "::error::No meta.yaml found in PR under submissions/inbox/. A meta.yaml file is compulsory."
+            exit 1
+          fi
+
+          echo "Found metadata file: $META"
+          
+          # Use python to parse YAML reliably
+          cat << 'EOF' > parse_meta.py
+          import yaml
+          import os
+          import sys
+
+          meta_file = sys.argv[1]
+          try:
+              with open(meta_file, 'r') as f:
+                  data = yaml.safe_load(f) or {}
+          except Exception as e:
+              print('::error::Failed to parse meta.yaml format: ' + str(e))
+              sys.exit(1)
+
+          model = str(data.get('model', 'not specified')).strip().replace('\n', ' ')
+          notes = str(data.get('notes', '')).strip().replace('\n', ' ')
+          sub_type = str(data.get('type', '')).strip().lower()
+
+          if not sub_type:
+              print("::error::The 'type' field is missing in meta.yaml. It must be human, llm, or human+llm.")
+              sys.exit(1)
+
+          if sub_type not in ['human', 'llm', 'human+llm']:
+              print("::error::Invalid type '" + sub_type + "'. Must be human, llm, or human+llm.")
+              sys.exit(1)
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('model=' + model + '\n')
+              out.write('notes=' + notes + '\n')
+              out.write('type=' + sub_type + '\n')
+          EOF
+          python3 parse_meta.py "$META"
+
+      - name: Enforce one-submission policy
+        run: |
+          GITHUB_USER="$(echo "${{ github.event.pull_request.user.login }}" | tr '[:upper:]' '[:lower:]')"
+          USER_DB=".github/submitted_github_users.txt"
+          TYPE="${{ steps.meta.outputs.type }}"
+          touch "$USER_DB"
+          RECORD="${GITHUB_USER}:${TYPE}"
+          
+          # Backwards compatibility: existing entries (just username) count as human submission
+          if grep -Fxqi "$GITHUB_USER" "$USER_DB" && [ "$TYPE" = "human" ]; then
+            echo "::error::GitHub user '$GITHUB_USER' has already submitted as human."
+            exit 1
+          fi
+          
+          # Exact match for type
+          if grep -Fxqi "$RECORD" "$USER_DB"; then
+            echo "::error::GitHub user '$GITHUB_USER' has already submitted a '$TYPE' type."
             exit 1
           fi
 
@@ -85,49 +153,11 @@ jobs:
           echo "f1=$F1" >> "$GITHUB_OUTPUT"
           echo "auc=$AUC" >> "$GITHUB_OUTPUT"
 
-      - name: Read optional meta.yaml
-        id: meta
-        run: |
-          TEAM="${{ steps.team.outputs.name }}"
-          echo "=== All files in PR submissions/inbox ==="
-          find pr-submission/submissions/inbox -type f
-
-          META=""
-          if [ -f "pr-submission/submissions/inbox/$TEAM/meta.yaml" ]; then
-            META="pr-submission/submissions/inbox/$TEAM/meta.yaml"
-          elif [ -f "pr-submission/submissions/inbox/$TEAM/meta.yml" ]; then
-            META="pr-submission/submissions/inbox/$TEAM/meta.yml"
-          else
-            META=$(find pr-submission/submissions/inbox \( -name "meta.yaml" -o -name "meta.yml" \) | head -1)
-          fi
-
-          MODEL=""
-          NOTES=""
-          TYPE=""
-          if [ -n "$META" ]; then
-            echo "Found metadata file: $META"
-            cat "$META"
-            MODEL=$(awk -F': ' '/^[Mm]odel:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
-            NOTES=$(awk -F': ' '/^[Nn]otes:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
-            TYPE=$(awk -F': ' '/^[Tt]ype:/{print $2}' "$META" | head -1 | tr ',' ' ' | xargs)
-            TYPE=$(echo "$TYPE" | tr -d '\r\n' | xargs)
-            echo "Parsed MODEL=$MODEL"
-            echo "Parsed NOTES=$NOTES"
-            echo "Parsed TYPE=$TYPE"
-          else
-            echo "No meta.yaml found anywhere in submissions/inbox/"
-          fi
-          # Default type to human if not specified
-          if [ -z "$TYPE" ]; then
-            TYPE="human"
-          fi
-          echo "model=$MODEL" >> "$GITHUB_OUTPUT"
-          echo "notes=$NOTES" >> "$GITHUB_OUTPUT"
-          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
-
       - name: Update leaderboard
         run: |
           TEAM="${{ steps.team.outputs.name }}"
+          GITHUB_USER="$(echo "${{ github.event.pull_request.user.login }}" | tr '[:upper:]' '[:lower:]')"
+          USER_DB=".github/submitted_github_users.txt"
           F1="${{ steps.eval.outputs.f1 }}"
           AUC="${{ steps.eval.outputs.auc }}"
           MODEL="${{ steps.meta.outputs.model }}"
@@ -135,14 +165,15 @@ jobs:
           TYPE="${{ steps.meta.outputs.type }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Validate type value
-          if [ -n "$TYPE" ] && [ "$TYPE" != "human" ] && [ "$TYPE" != "llm" ] && [ "$TYPE" != "human+llm" ]; then
-            echo "::warning::Invalid type '$TYPE'. Must be human, llm, or human+llm. Defaulting to human."
-            TYPE="human"
-          fi
-
           # Append to leaderboard CSV (columns: timestamp_utc,team,model,type,score,notes)
           echo "${TIMESTAMP},${TEAM},${MODEL},${TYPE},${F1},${NOTES}" >> leaderboard/leaderboard.csv
+
+          # Track GitHub usernames that have submitted
+          touch "$USER_DB"
+          RECORD="${GITHUB_USER}:${TYPE}"
+          if ! grep -Fxqi "$RECORD" "$USER_DB" && ! (grep -Fxqi "$GITHUB_USER" "$USER_DB" && [ "$TYPE" = "human" ]); then
+            echo "$RECORD" >> "$USER_DB"
+          fi
 
           # Render leaderboard markdown
           python competition/render_leaderboard.py
@@ -154,7 +185,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add leaderboard/ docs/leaderboard.csv
+          git add leaderboard/ docs/leaderboard.csv .github/submitted_github_users.txt
           git commit -m "🏆 Leaderboard update: ${{ steps.team.outputs.name }} (F1=${{ steps.eval.outputs.f1 }})"
           git push
 
