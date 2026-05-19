@@ -1,0 +1,3 @@
+model: GAT                          # Name of your model (optional)
+type: LLM                               # human, llm, or human+llm
+notes: 3-layer GAT with multi-head attention
