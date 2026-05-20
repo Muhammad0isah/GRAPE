@@ -1,0 +1,3 @@
+model: GCN                          # Name of your model (optional)
+type: human                               # human, llm, or human+llm
+notes: 3-layer GCN (node degree as additional feature)
