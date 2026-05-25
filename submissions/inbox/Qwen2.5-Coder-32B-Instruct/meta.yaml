@@ -1,0 +1,3 @@
+model: GCNConv                         
+type: llm                               # human, llm, or human+llm
+notes: /
