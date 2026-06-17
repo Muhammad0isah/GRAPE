@@ -1,0 +1,3 @@
+model: GCN                          
+type: human                               
+notes: 2-layer GCN  
