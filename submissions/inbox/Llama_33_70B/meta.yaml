@@ -1,0 +1,3 @@
+model: LLama_33_70B                         # Name of your model (optional)
+type: llm                               # human, llm, or human+llm
+notes: Generated code
