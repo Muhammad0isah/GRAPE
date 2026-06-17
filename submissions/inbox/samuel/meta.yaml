@@ -1,0 +1,3 @@
+model: GIN                         
+type: human                               
+notes:  GCN and GIN layers  
