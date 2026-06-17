@@ -1,0 +1,3 @@
+model: GrapeGAT-Optimized
+type: human
+notes: Improved GAT with correct graph feature batching, bidirectional edges, residual connections, and label smoothing
