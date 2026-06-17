@@ -1,0 +1,3 @@
+model: GCN_degree
+type: human
+notes: 3-layer GCN with node degree feature and global mean/max/sum pooling
