@@ -1,0 +1,3 @@
+model: BiGCN
+type: human
+notes: Data augmentation to manage small dataset
